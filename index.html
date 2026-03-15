@@ -1,0 +1,2695 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Study Planner</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="./assets/file_000000001fe8720ba06b527bffcc90d4.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./tailwind.css">
+  <style>
+    .hidden { display: none !important; }
+
+    body { margin: 0; background: #020617; color: #e5e7eb; }
+
+    #appShell { min-height: 100vh; background: radial-gradient(1200px 600px at 18% 12%, rgba(34,197,94,.28), transparent 60%), radial-gradient(1000px 700px at 82% 0%, rgba(34,211,238,.14), transparent 55%), linear-gradient(135deg, #020617, #04122a 45%, #001b2a); color: #e5e7eb; }
+    #layout { display: flex; min-height: 100vh; }
+    #sidebar { width: 288px; background: rgba(255,255,255,.05); border-right: 1px solid rgba(255,255,255,.10); display: flex; flex-direction: column; }
+    #content { flex: 1; overflow: auto; }
+    #topbar { position: sticky; top: 0; z-index: 10; background: rgba(2,6,23,.55); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,.10); }
+    #container { max-width: 72rem; margin: 0 auto; padding: 24px; }
+
+    .bg-indigo-500 { background-color: rgba(34,197,94,0.92) !important; }
+    .hover\:bg-indigo-400:hover { background-color: rgba(34,197,94,1) !important; }
+    .focus\:border-indigo-400:focus { border-color: rgba(34,197,94,0.95) !important; }
+    .from-indigo-500 { --tw-gradient-from: rgba(34,197,94,0.92) !important; --tw-gradient-to: rgba(34,197,94,0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+    .via-fuchsia-500 { --tw-gradient-stops: var(--tw-gradient-from), rgba(34,211,238,0.75), var(--tw-gradient-to) !important; }
+    .to-emerald-400 { --tw-gradient-to: rgba(34,197,94,0.75) !important; }
+
+    .page { max-width: 72rem; margin: 0 auto; }
+    .grid { display: grid; }
+
+    #statsGrid { display: grid; gap: 20px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    #dashBottomGrid { display: grid; gap: 20px; grid-template-columns: 2fr 1fr; }
+    #subjectsGrid { display: grid; gap: 20px; grid-template-columns: 1fr 2fr; }
+    #tasksGrid { display: grid; gap: 20px; grid-template-columns: 1fr 2fr; }
+    #taskFormGrid { display: grid; gap: 12px; }
+    #taskFormRow { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+    #subjectFormRow { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+
+    @media (max-width: 1024px) {
+      #dashBottomGrid { grid-template-columns: 1fr; }
+      #subjectsGrid { grid-template-columns: 1fr; }
+      #tasksGrid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 900px) {
+      #layout { flex-direction: column; }
+      #sidebar { width: 100%; }
+    }
+    @media (max-width: 780px) {
+      #statsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #taskFormRow { grid-template-columns: 1fr; }
+      #subjectFormRow { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 420px) {
+      #statsGrid { grid-template-columns: 1fr; }
+    }
+
+    h1, h2, h3 { margin: 0; }
+
+    #introOverlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: radial-gradient(1200px 600px at 18% 12%, rgba(34,197,94,.22), transparent 60%), radial-gradient(1000px 700px at 82% 0%, rgba(34,211,238,.12), transparent 55%), linear-gradient(135deg, #020617, #04122a 45%, #001b2a); }
+    #introText { font-family: "Dancing Script", cursive; font-weight: 700; font-size: clamp(54px, 9vw, 120px); letter-spacing: 1px; color: rgba(34,197,94,0.95); text-shadow: 0 0 18px rgba(34,197,94,0.22), 0 0 46px rgba(34,211,238,0.16); will-change: transform, opacity, filter; }
+    #introOverlay.out { opacity: 0; transform: scale(1.02); transition: opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1), transform 1000ms cubic-bezier(0.22, 1, 0.36, 1); pointer-events: none; }
+
+    input, select, button { font: inherit; }
+    input, select { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); color: #e5e7eb; padding: 12px 14px; outline: none; }
+    input::placeholder { color: rgba(229,231,235,.55); }
+    select option { color: #0f172a; }
+
+    button { cursor: pointer; }
+
+    .anim-card { box-shadow: 0 10px 30px rgba(2,6,23,.35); }
+
+    .page { transition: opacity 220ms ease, transform 220ms ease; }
+    .page.is-enter { opacity: 0; transform: translateY(8px); }
+    .page.is-leave { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+
+    .anim-card { transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease; }
+    .anim-card:hover { transform: translateY(-2px); }
+
+    .anim-btn { transition: transform 140ms ease, filter 140ms ease, background-color 140ms ease, border-color 140ms ease; }
+    .anim-btn:active { transform: scale(0.98); }
+
+    .list-enter { opacity: 0; transform: translateY(10px); }
+    .list-enter-active { transition: opacity 260ms ease, transform 260ms ease; opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body class="bg-slate-950 font-sans">
+
+<div id="introOverlay">
+  <div class="text-center">
+    <span id="introText"></span>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div id="appShell" class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+  <div id="layout" class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="w-72 shrink-0 border-r border-white/10 bg-white/5 text-white">
+      <div class="p-6">
+        <div class="flex items-center gap-3">
+          <div id="sidebarLogoWrap" class="rounded-2xl border border-white/10 bg-white/5 p-1">
+            <img id="sidebarLogo" src="./assets/studyplanner-logo.png" alt="Study Planner" class="h-14 w-14 rounded-2xl object-contain">
+          </div>
+        </div>
+
+        <div class="mt-8 space-y-2">
+          <button id="nav-dashboard" onclick="showPage('dashboard')" class="anim-btn w-full rounded-xl px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">
+            <span class="mr-2">📊</span> Dashboard
+          </button>
+          <button id="nav-subjects" onclick="showPage('subjects')" class="anim-btn w-full rounded-xl px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">
+            <span class="mr-2">📚</span> Subjects
+          </button>
+          <button id="nav-tasks" onclick="showPage('tasks')" class="anim-btn w-full rounded-xl px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">
+            <span class="mr-2">✅</span> Tasks
+          </button>
+          <button id="nav-games" onclick="showPage('games')" class="anim-btn w-full rounded-xl px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">
+            <span class="mr-2">🧠</span> Games
+          </button>
+          <button id="nav-focus" onclick="showPage('focus')" class="anim-btn w-full rounded-xl px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">
+            <span class="mr-2">⏳</span> Focus Suite
+          </button>
+          <button id="nav-challenge" onclick="showPage('challenge')" class="anim-btn w-full rounded-xl px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">
+            <span class="mr-2">🏁</span> Daily Challenge
+          </button>
+          <button id="nav-schedule" onclick="showPage('schedule')" class="anim-btn w-full rounded-xl px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">
+            <span class="mr-2">🎯</span> Schedule Planner
+          </button>
+        </div>
+
+        <div class="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p class="text-xs text-white/60">Quick tip</p>
+          <p id="tipText" class="mt-1 text-sm font-medium leading-snug">Break big tasks into 25–40 minute sessions.</p>
+        </div>
+
+        <div class="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p class="text-xs text-gray-400 leading-snug">This site is still under development. Please feel free to report any bug/issue on the below mentioned email.<br>Email: <a href="mailto:sr879420@gmail.com" class="underline hover:text-white">sr879420@gmail.com</a>.<br>Note: Only report if there are any bugs/issues. Do not use this email for personal use.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Content -->
+    <div id="content" class="flex-1 overflow-auto">
+      <div id="topbar" class="sticky top-0 z-10 border-b border-white/10 bg-slate-950/40 backdrop-blur">
+        <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+          <div>
+            <h1 id="pageTitle" class="text-3xl font-bold text-white text-left">Dashboard</h1>
+            <p id="pageSubtitle" class="mt-0.5 text-sm text-white/60">Your plan at a glance</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="hidden sm:block rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80">
+              <span id="todayLabel"></span>
+            </div>
+            <button onclick="openQuickAdd()" class="anim-btn rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-soft hover:bg-indigo-400">＋ Quick Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="container" class="mx-auto max-w-6xl p-6">
+
+      <!-- Dashboard -->
+      <div id="dashboard" class="page">
+        <div id="statsGrid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-5 text-white shadow-soft">
+            <p class="text-sm text-white/60">Total Tasks</p>
+            <p id="totalTasks" class="mt-2 text-3xl font-bold">0</p>
+          </div>
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-5 text-white shadow-soft">
+            <p class="text-sm text-white/60">Completed</p>
+            <p id="completedTasks" class="mt-2 text-3xl font-bold text-emerald-300">0</p>
+          </div>
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-5 text-white shadow-soft">
+            <p class="text-sm text-white/60">Pending</p>
+            <p id="pendingTasks" class="mt-2 text-3xl font-bold text-rose-300">0</p>
+          </div>
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-5 text-white shadow-soft">
+            <p class="text-sm text-white/60">Due Soon</p>
+            <p id="dueSoonTasks" class="mt-2 text-3xl font-bold text-amber-300">0</p>
+          </div>
+        </div>
+
+        <div id="dashBottomGrid" class="mt-5 grid gap-5 lg:grid-cols-2">
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-semibold">🎯 Goal Progress</h3>
+              <p id="progressLabel" class="text-sm text-white/70">0%</p>
+            </div>
+            <div class="mt-4 w-full rounded-full bg-white/10 h-3 overflow-hidden">
+              <div id="progressBar" class="h-3 rounded-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-emerald-400" style="width: 0%; transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);"></div>
+            </div>
+            <div class="mt-5 grid gap-3 sm:grid-cols-3">
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p class="text-xs text-white/60">Today</p>
+                <p id="todayTaskCount" class="mt-1 text-lg font-semibold">0 tasks</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p class="text-xs text-white/60">High Priority</p>
+                <p id="highPriorityCount" class="mt-1 text-lg font-semibold">0</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p class="text-xs text-white/60">Subjects</p>
+                <p id="subjectCount" class="mt-1 text-lg font-semibold">0</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft">
+            <h3 class="text-base font-semibold">📌 Upcoming</h3>
+            <p class="mt-1 text-sm text-white/60">Next items you should focus on</p>
+            <div id="upcomingList" class="mt-4 space-y-3"></div>
+          </div>
+        </div>
+
+
+        <div class="mt-5 anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-base font-semibold">📈 Digital Wellbeing</h3>
+              <p class="mt-1 text-sm text-white/60">Track your study time per subject (last 7 days).</p>
+            </div>
+            <button onclick="renderDigitalWellbeing()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">Refresh</button>
+          </div>
+          <div id="wellbeingGrid" class="mt-5 grid gap-4 lg:grid-cols-3"></div>
+        </div>
+      </div>
+
+      <!-- Subjects -->
+      <div id="subjects" class="page hidden">
+        <div id="subjectsGrid" class="grid gap-5 lg:grid-cols-3">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-1">
+            <h3 class="text-base font-semibold text-left">Add Subject</h3>
+            <div class="mt-4 space-y-3">
+              <input id="subjectInput" placeholder="Subject name" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-indigo-400">
+              <div id="subjectFormRow" class="grid grid-cols-2 gap-3">
+                <input id="subjectTarget" type="number" min="0" placeholder="Target hrs/week" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-indigo-400">
+                <select id="subjectColor" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400">
+                  <option value="indigo">Indigo</option>
+                  <option value="emerald">Emerald</option>
+                  <option value="amber">Amber</option>
+                  <option value="rose">Rose</option>
+                  <option value="sky">Sky</option>
+                  <option value="fuchsia">Fuchsia</option>
+                </select>
+              </div>
+              <button onclick="addSubject()" class="anim-btn w-full rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white shadow-soft hover:bg-indigo-400">Add Subject</button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-semibold text-left">Subjects</h3>
+                <p class="mt-1 text-sm text-white/60">Use subjects to organize tasks and set weekly targets.</p>
+              </div>
+              <button onclick="seedSubjects()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">Auto Fill</button>
+            </div>
+
+            <div id="subjectList" class="mt-5 space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks -->
+      <div id="tasks" class="page hidden">
+        <div id="tasksGrid" class="grid gap-5 lg:grid-cols-3">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-1">
+            <h3 class="text-base font-semibold text-left">Create Task</h3>
+            <div id="taskFormGrid" class="mt-4 space-y-3">
+              <input id="taskInput" placeholder="Task title" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-indigo-400">
+              <select id="taskSubject" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400"></select>
+              <div id="taskFormRow" class="grid grid-cols-2 gap-3">
+                <input id="taskDue" type="date" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400">
+                <select id="taskPriority" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <button onclick="addTask()" class="anim-btn w-full rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white shadow-soft hover:bg-indigo-400">Add Task</button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-2">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 class="text-base font-semibold text-left">Tasks</h3>
+                <p class="mt-1 text-sm text-white/60">Click a task to toggle completion.</p>
+              </div>
+
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <select id="filterStatus" onchange="renderTasks()" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white outline-none focus:border-indigo-400">
+                  <option value="all">All</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <select id="filterPriority" onchange="renderTasks()" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white outline-none focus:border-indigo-400">
+                  <option value="all">Any priority</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="taskList" class="mt-5 space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Games -->
+      <div id="games" class="page hidden">
+        <div class="grid gap-5 lg:grid-cols-3">
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-2">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h3 class="text-base font-semibold text-left">⚡ Math Sprint</h3>
+                <p class="mt-1 text-sm text-white/60">Answer fast for 60 seconds. Great warm-up before studying.</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-white/60">Time</p>
+                <p id="mathTime" class="text-xl font-bold">60</p>
+              </div>
+            </div>
+
+            <div class="mt-5 grid gap-4 sm:grid-cols-3">
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4 sm:col-span-2">
+                <p class="text-xs text-white/60">Question</p>
+                <p id="mathQuestion" class="mt-2 text-3xl font-bold tracking-tight">—</p>
+                <div class="mt-4 flex gap-2">
+                  <input id="mathAnswer" inputmode="numeric" placeholder="Type answer" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-indigo-400" onkeydown="onMathAnswerKeydown(event)">
+                  <button onclick="submitMathAnswer()" class="anim-btn rounded-xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-400">Submit</button>
+                </div>
+                <p id="mathFeedback" class="mt-3 text-sm text-white/70">Press Enter to submit.</p>
+              </div>
+
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p class="text-xs text-white/60">Score</p>
+                <p id="mathScore" class="mt-2 text-3xl font-bold">0</p>
+                <p class="mt-2 text-xs text-white/50">Best: <span id="mathBest">0</span></p>
+                <div class="mt-4 grid gap-2">
+                  <button onclick="startMathSprint()" class="anim-btn rounded-xl bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30">Start</button>
+                  <button onclick="stopMathSprint()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">Stop</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-1">
+            <h3 class="text-base font-semibold text-left">🔤 Word Scramble</h3>
+            <p class="mt-1 text-sm text-white/60">Unscramble the word. Great for quick brain activation.</p>
+
+            <div class="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+              <p class="text-xs text-white/60">Scrambled</p>
+              <p id="scrambleWord" class="mt-2 text-2xl font-bold tracking-tight">—</p>
+            </div>
+
+            <div class="mt-4 space-y-2">
+              <input id="scrambleGuess" placeholder="Your guess" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-indigo-400" onkeydown="onScrambleKeydown(event)">
+              <div class="flex gap-2">
+                <button onclick="checkScramble()" class="anim-btn flex-1 rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-400">Check</button>
+                <button onclick="newScramble()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">New</button>
+              </div>
+              <p id="scrambleFeedback" class="text-sm text-white/70">Tip: press Enter to check.</p>
+              <div class="mt-3 grid grid-cols-2 gap-3">
+                <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <p class="text-xs text-white/60">Solved</p>
+                  <p id="scrambleSolved" class="mt-1 text-lg font-semibold">0</p>
+                </div>
+                <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <p class="text-xs text-white/60">Streak</p>
+                  <p id="scrambleStreak" class="mt-1 text-lg font-semibold">0</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-2">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h3 class="text-base font-semibold text-left">🟩 Guess the Word</h3>
+                <p class="mt-1 text-sm text-white/60">You get 5 tries. Each guess shows correct letters in correct positions.</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-white/60">Chances</p>
+                <p id="guessChances" class="text-xl font-bold">5</p>
+              </div>
+            </div>
+
+            <div class="mt-5 rounded-xl border border-white/10 bg-white/5 p-4">
+              <p class="text-xs text-white/60">Hint</p>
+              <p id="guessHint" class="mt-1 text-sm font-semibold text-white">—</p>
+              <p class="mt-3 text-xs text-white/50">Word length: <span id="guessLen">0</span></p>
+            </div>
+
+            <div class="mt-4 flex gap-2">
+              <input id="guessInput" maxlength="12" placeholder="Type a word" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-indigo-400" onkeydown="onGuessKeydown(event)">
+              <button onclick="submitGuessWord()" class="anim-btn rounded-xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-400">Guess</button>
+              <button onclick="newGuessWord()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">New</button>
+            </div>
+
+            <p id="guessFeedback" class="mt-3 text-sm text-white/70">Tip: press Enter to submit.</p>
+
+            <div id="guessBoard" class="mt-4 grid gap-2"></div>
+
+            <div class="mt-4 grid grid-cols-3 gap-3">
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p class="text-xs text-white/60">Wins</p>
+                <p id="guessWins" class="mt-1 text-lg font-semibold">0</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p class="text-xs text-white/60">Losses</p>
+                <p id="guessLosses" class="mt-1 text-lg font-semibold">0</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p class="text-xs text-white/60">Streak</p>
+                <p id="guessStreak" class="mt-1 text-lg font-semibold">0</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-1">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h3 class="text-base font-semibold text-left">🪢 Hangman</h3>
+                <p class="mt-1 text-sm text-white/60">Guess letters before you run out of lives.</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-white/60">Lives</p>
+                <p id="hangLives" class="text-xl font-bold">6</p>
+              </div>
+            </div>
+
+            <div class="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+              <p class="text-xs text-white/60">Word</p>
+              <p id="hangWord" class="mt-2 text-2xl font-bold tracking-widest">—</p>
+              <p class="mt-2 text-xs text-white/50">Hint: <span id="hangHint">—</span></p>
+            </div>
+
+            <div class="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+              <p class="text-xs text-white/60">Wrong letters</p>
+              <p id="hangWrong" class="mt-2 text-sm font-semibold text-rose-200">—</p>
+            </div>
+
+            <div id="hangKeys" class="mt-4 grid grid-cols-7 gap-2"></div>
+
+            <div class="mt-4 flex gap-2">
+              <button onclick="newHangman()" class="anim-btn flex-1 rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-400">New</button>
+              <button onclick="revealHangman()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">Reveal</button>
+            </div>
+
+            <p id="hangFeedback" class="mt-3 text-sm text-white/70">Pick letters below.</p>
+
+            <div class="mt-4 grid grid-cols-3 gap-3">
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p class="text-xs text-white/60">Wins</p>
+                <p id="hangWins" class="mt-1 text-lg font-semibold">0</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p class="text-xs text-white/60">Losses</p>
+                <p id="hangLosses" class="mt-1 text-lg font-semibold">0</p>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p class="text-xs text-white/60">Streak</p>
+                <p id="hangStreak" class="mt-1 text-lg font-semibold">0</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft lg:col-span-2">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h3 class="text-base font-semibold">🎯 Guess the Number</h3>
+                <p class="mt-1 text-sm text-white/60">Guess a secret number between 1 and 100. You get 7 tries.</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-white/60">Tries</p>
+                <p id="numTries" class="text-xl font-bold">7</p>
+              </div>
+            </div>
+
+            <div class="mt-5 grid gap-4 sm:grid-cols-3">
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4 sm:col-span-2">
+                <p class="text-xs text-white/60">Range</p>
+                <p class="mt-1 text-sm font-semibold text-white">1 to 100</p>
+
+                <div class="mt-4 flex gap-2">
+                  <input id="numInput" inputmode="numeric" placeholder="Type a number" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-indigo-400" onkeydown="onGuessNumberKeydown(event)">
+                  <button onclick="submitGuessNumber()" class="anim-btn rounded-xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-400">Guess</button>
+                  <button onclick="newGuessNumber()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">New</button>
+                </div>
+
+                <p id="numFeedback" class="mt-3 text-sm text-white/70">Tip: press Enter to submit.</p>
+
+                <div class="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-xs text-white/60">History</p>
+                  <p id="numHistory" class="mt-2 text-sm font-semibold text-white/80">—</p>
+                </div>
+              </div>
+
+              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p class="text-xs text-white/60">Stats</p>
+                <div class="mt-3 grid gap-3">
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p class="text-xs text-white/60">Wins</p>
+                    <p id="numWins" class="mt-1 text-lg font-semibold">0</p>
+                  </div>
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p class="text-xs text-white/60">Losses</p>
+                    <p id="numLosses" class="mt-1 text-lg font-semibold">0</p>
+                  </div>
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p class="text-xs text-white/60">Best tries</p>
+                    <p id="numBest" class="mt-1 text-lg font-semibold">—</p>
+                  </div>
+                  <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p class="text-xs text-white/60">Streak</p>
+                    <p id="numStreak" class="mt-1 text-lg font-semibold">0</p>
+                  </div>
+                </div>
+
+                <div class="mt-4 grid gap-2">
+                  <button onclick="revealGuessNumber()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">Reveal</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Focus Suite -->
+      <div id="focus" class="page hidden">
+        <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-base font-semibold text-left">⏳ Focus Suite</h3>
+              <p class="mt-1 text-sm text-white/60">Timer • Stopwatch • Pomodoro • Ambient • Study Browser</p>
+            </div>
+            <label class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80">
+              <input id="strictToggle" type="checkbox" class="h-4 w-4">
+              Strict
+            </label>
+          </div>
+
+          <div class="mt-5 grid gap-4 sm:grid-cols-3">
+            <button id="modeTimerBtn" onclick="setFocusMode('timer')" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">Timer</button>
+            <button id="modeStopwatchBtn" onclick="setFocusMode('stopwatch')" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">Stopwatch</button>
+            <button id="modePomodoroBtn" onclick="setFocusMode('pomodoro')" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">Pomodoro</button>
+          </div>
+
+          <div class="mt-6 text-center">
+            <p id="focusMainLabel" class="text-5xl font-bold tracking-tight">25:00</p>
+            <p id="focusSubLabel" class="mt-2 text-sm text-white/60">Ready</p>
+          </div>
+
+          <div id="pomodoroConfig" class="mt-6 hidden grid gap-4 sm:grid-cols-3">
+            <input id="pomFocusMin" type="number" min="1" value="25" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400" placeholder="Focus">
+            <input id="pomShortMin" type="number" min="1" value="5" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400" placeholder="Short">
+            <input id="pomLongMin" type="number" min="1" value="15" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400" placeholder="Long">
+          </div>
+
+          <div id="timerConfig" class="mt-6 hidden">
+            <input id="timerMin" type="number" min="1" value="30" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400" placeholder="Minutes">
+          </div>
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button id="focusStartBtn2" onclick="startFocusSession()" class="anim-btn rounded-xl bg-emerald-500/20 px-6 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30">Start</button>
+            <button id="focusPauseBtn" onclick="togglePauseFocus()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">Pause</button>
+            <button id="focusStopBtn" onclick="stopFocusSession()" class="anim-btn rounded-xl bg-rose-500/10 px-6 py-3 text-sm font-semibold text-rose-200 hover:bg-rose-500/20">Stop</button>
+          </div>
+
+          <div class="mt-8 grid gap-6 lg:grid-cols-2">
+            <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+              <p class="text-xs text-white/60 mb-3">Ambient</p>
+              <div class="flex gap-3">
+                <select id="ambientPreset" class="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400">
+                  <option value="off">Off</option>
+                  <option value="brown">Brown noise</option>
+                  <option value="pink">Pink noise</option>
+                  <option value="tone">Soft tone</option>
+                  <option value="ocean">Ocean waves</option>
+                  <option value="koel">Koel bird chirps</option>
+                  <option value="lofi">Lo-fi hip-hop beats</option>
+                  <option value="classical-lofi">Classical lo-fi</option>
+                  <option value="rain">Gentle rain</option>
+                  <option value="cafe">Café ambience</option>
+                </select>
+                <button onclick="toggleAmbient()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">Play</button>
+              </div>
+              <input id="ambientVol" type="range" min="0" max="100" value="35" class="mt-4 w-full">
+            </div>
+
+            <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+              <p class="text-xs text-white/60 mb-3">Study Browser (soft)</p>
+              <div class="flex gap-3">
+                <input id="studyUrl" placeholder="https://..." class="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-emerald-400">
+                <button onclick="openStudyUrl()" class="anim-btn rounded-xl bg-emerald-500/20 px-5 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30">Open</button>
+              </div>
+              <div class="mt-3 flex gap-3">
+                <input id="allowDomains" placeholder="allow: khanacademy.org, wikipedia.org" class="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-emerald-400">
+                <button onclick="saveAllowlist()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+            <div id="studyBlocked" class="hidden p-5 text-sm text-white/80">
+              <p class="font-semibold text-rose-200">Blocked by Focus Mode</p>
+              <p class="mt-1 text-xs text-white/60">This domain isn’t on your allowlist.</p>
+            </div>
+            <div id="studyLoadError" class="hidden p-5 text-sm text-white/80">
+              <p class="font-semibold text-amber-200">Permission Denied.</p>
+              <p class="mt-1 text-xs text-white/60">Many sites block iframe embedding.</p>
+              <button id="openInNewTabBtn" class="mt-3 anim-btn rounded-xl bg-amber-500/20 px-4 py-2 text-xs font-semibold text-amber-100 hover:bg-amber-500/30">Open in New Tab</button>
+            </div>
+            <iframe id="studyFrame" title="Study Browser" class="h-64 w-full" src="about:blank" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Challenge -->
+      <div id="challenge" class="page hidden">
+        <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-base font-semibold text-left">🏁 Daily Challenge</h3>
+              <p class="mt-1 text-sm text-white/60">Complete a quick win today to build momentum.</p>
+            </div>
+            <button onclick="updateDailyChallenge()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">Refresh</button>
+          </div>
+
+          <div class="mt-6 rounded-xl border border-white/10 bg-white/5 p-5">
+            <p class="text-sm font-semibold text-white" id="dailyChallengeText">Add 1 task due today, then complete it.</p>
+          </div>
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button onclick="openQuickAdd()" class="anim-btn rounded-xl bg-emerald-500/20 px-6 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30">Add Task</button>
+            <button onclick="viewTasks()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white/90 hover:bg-white/10">View Tasks</button>
+          </div>
+
+          <div class="mt-8 rounded-xl border border-white/10 bg-white/5 p-5">
+            <p class="text-xs text-white/60 mb-3">Your progress</p>
+            <div class="grid gap-4 sm:grid-cols-3">
+              <div class="text-center">
+                <p class="text-2xl font-bold text-emerald-300" id="challengeCompleted">0</p>
+                <p class="text-xs text-white/60 mt-1">Completed</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-amber-300" id="challengeStreak">0</p>
+                <p class="text-xs text-white/60 mt-1">Day Streak</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-sky-300" id="challengeTotal">0</p>
+                <p class="text-xs text-white/60 mt-1">All Time</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule Planner -->
+      <div id="schedule" class="page hidden">
+        <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-6 text-white shadow-soft">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-base font-semibold text-left">🎯 Schedule Planner</h3>
+              <p class="mt-1 text-sm text-white/60">Plan focus sessions for the week (stored on this device).</p>
+            </div>
+            <button onclick="renderSchedule()" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">Refresh</button>
+          </div>
+
+          <div class="mt-6 grid gap-6 lg:grid-cols-3">
+            <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+              <p class="text-xs text-white/60 mb-3">Add session</p>
+              <div class="space-y-3">
+                <select id="schedDay" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400">
+                  <option value="mon">Mon</option>
+                  <option value="tue">Tue</option>
+                  <option value="wed">Wed</option>
+                  <option value="thu">Thu</option>
+                  <option value="fri">Fri</option>
+                  <option value="sat">Sat</option>
+                  <option value="sun">Sun</option>
+                </select>
+                <input id="schedTime" type="time" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400">
+                <input id="schedMin" type="number" min="5" value="45" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400" placeholder="Minutes">
+                <select id="schedSubject" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400"></select>
+                <button onclick="addScheduleItem()" class="anim-btn w-full rounded-xl bg-emerald-500/20 px-4 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30">Add</button>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-white/10 bg-white/5 p-5 lg:col-span-2">
+              <p class="text-xs text-white/60 mb-3">This week</p>
+              <div id="scheduleList" class="space-y-3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </div>
+</div>
+</div>
+
+<script>
+let subjects = JSON.parse(localStorage.getItem("subjects")) || [];
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+const tips = [
+  "Break big tasks into 25–40 minute sessions.",
+  "Start with the hardest subject while your energy is high.",
+  "Use due dates to avoid last-minute stress.",
+  "Aim for consistency over perfection.",
+  "Review yesterday's notes for 10 minutes before starting new work.",
+  "Discipline beats motivation — show up even on low-energy days.",
+  "If it's worth doing, it's worth doing for 10 minutes.",
+  "Focus tip: Put your phone in another room for one study block.",
+  "Consistency tip: Same start time daily makes studying automatic.",
+  "Motivation: Small progress every day becomes big results.",
+  "Focus tip: Study in 25 minutes, break for 5. Repeat 3–4 times.",
+  "Consistency tip: Track your streak, not your perfection.",
+  "Quote: “Success is the sum of small efforts, repeated day in and day out.”",
+  "Quote: “Don’t watch the clock; do what it does. Keep going.”",
+  "Quote: “The future depends on what you do today.”",
+  "Quote: “You don’t have to be great to start, but you have to start to be great.”",
+  "Focus tip: Write the 1 next task. Start before you feel ready.",
+  "Consistency tip: Plan tomorrow’s first task before you sleep.",
+  "Motivation: Your goals don’t care how you feel — take one step.",
+];
+
+function setRandomTip() {
+  const tipText = document.getElementById("tipText");
+  if (!tipText || !tips.length) return;
+  tipText.textContent = tips[Math.floor(Math.random() * tips.length)];
+}
+
+function uid() {
+  return Math.random().toString(16).slice(2) + Date.now().toString(16);
+}
+
+function colorClasses(color) {
+  const map = {
+    indigo: "bg-indigo-500/15 text-indigo-200 border-indigo-500/20",
+    emerald: "bg-emerald-500/15 text-emerald-200 border-emerald-500/20",
+    amber: "bg-amber-500/15 text-amber-200 border-amber-500/20",
+    rose: "bg-rose-500/15 text-rose-200 border-rose-500/20",
+    sky: "bg-sky-500/15 text-sky-200 border-sky-500/20",
+    fuchsia: "bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-500/20",
+  };
+  return map[color] || map.indigo;
+}
+
+function normalizeData() {
+  const normalizedSubjects = [];
+  for (const s of subjects) {
+    if (typeof s === "string") {
+      normalizedSubjects.push({ id: uid(), name: s, color: "indigo", targetHours: 0 });
+      continue;
+    }
+    if (s && typeof s === "object") {
+      normalizedSubjects.push({
+        id: s.id || uid(),
+        name: s.name || s.title || "Untitled",
+        color: s.color || "indigo",
+        targetHours: Number(s.targetHours || 0),
+      });
+    }
+  }
+
+  const normalizedTasks = [];
+  for (const t of tasks) {
+    if (typeof t === "string") {
+      normalizedTasks.push({ id: uid(), title: t, completed: false, subjectId: "", dueDate: "", priority: "medium", createdAt: Date.now() });
+      continue;
+    }
+    if (t && typeof t === "object") {
+      normalizedTasks.push({
+        id: t.id || uid(),
+        title: t.title || t.name || "Untitled",
+        completed: Boolean(t.completed),
+        subjectId: t.subjectId || "",
+        dueDate: t.dueDate || "",
+        priority: t.priority || "medium",
+        createdAt: Number(t.createdAt || Date.now()),
+      });
+    }
+  }
+
+  subjects = normalizedSubjects;
+  tasks = normalizedTasks;
+  localStorage.setItem("subjects", JSON.stringify(subjects));
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function initUI() {
+  normalizeData();
+  refreshSubjectDropdown();
+  setRandomTip();
+  const todayLabel = document.getElementById("todayLabel");
+  if (todayLabel) todayLabel.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  wireLogoFallback();
+  updateAllowlistInputUI();
+  setFocusMode('pomodoro');
+  updateFocusSuiteUI();
+  const strictToggle = document.getElementById('strictToggle');
+  if (strictToggle) strictToggle.onchange = setStrictFromUI;
+  const vol = document.getElementById('ambientVol');
+  if (vol) vol.oninput = onAmbientVolChange;
+  renderSchedule();
+  renderSubjects();
+  renderTasks();
+  updateDashboard();
+}
+
+function wireLogoFallback() {
+  const img = document.getElementById('sidebarLogo');
+  const wrap = document.getElementById('sidebarLogoWrap');
+  if (!img || !wrap) return;
+
+  const fallback = () => {
+    wrap.innerHTML = '';
+    const d = document.createElement('div');
+    d.className = 'h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400/40 via-cyan-400/20 to-slate-900 border border-white/10';
+    wrap.appendChild(d);
+  };
+
+  img.onerror = fallback;
+  if (img.complete && img.naturalWidth === 0) fallback();
+}
+
+function runIntroThenBoot() {
+  const overlay = document.getElementById('introOverlay');
+  const textEl = document.getElementById('introText');
+  const app = document.getElementById('app');
+  if (!overlay || !textEl || !app) {
+    if (app) app.classList.remove('hidden');
+    initUI();
+    showPage('dashboard');
+    return;
+  }
+
+  const words = [
+    'welcome',
+  ];
+
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+  const animateOnce = (el, keyframes, options) => new Promise((resolve) => {
+    const a = el.animate(keyframes, options);
+    a.onfinish = resolve;
+  });
+
+  (async () => {
+    for (const w of words) {
+      textEl.textContent = w;
+      await animateOnce(textEl,
+        [
+          { opacity: 0, transform: 'translateY(12px) scale(0.985)', filter: 'blur(10px)' },
+          { opacity: 1, transform: 'translateY(0px) scale(1)', filter: 'blur(0px)' }
+        ],
+        { duration: 760, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'both' }
+      );
+      await wait(520);
+      await animateOnce(textEl,
+        [
+          { opacity: 1, transform: 'translateY(0px) scale(1)', filter: 'blur(0px)' },
+          { opacity: 0, transform: 'translateY(-10px) scale(1.01)', filter: 'blur(10px)' }
+        ],
+        { duration: 620, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'both' }
+      );
+      await wait(80);
+    }
+
+    overlay.classList.add('out');
+    await wait(1000);
+    overlay.classList.add('hidden');
+    app.classList.remove('hidden');
+    initUI();
+    showPage('dashboard');
+  })();
+}
+
+document.addEventListener('DOMContentLoaded', runIntroThenBoot);
+
+function setActiveNav(id) {
+  const items = [
+    { page: "dashboard", nav: "nav-dashboard" },
+    { page: "subjects", nav: "nav-subjects" },
+    { page: "tasks", nav: "nav-tasks" },
+    { page: "games", nav: "nav-games" },
+    { page: "focus", nav: "nav-focus" },
+    { page: "challenge", nav: "nav-challenge" },
+    { page: "schedule", nav: "nav-schedule" },
+  ];
+  items.forEach(({ page, nav }) => {
+    const el = document.getElementById(nav);
+    if (!el) return;
+    if (page === id) el.classList.add("bg-white/10");
+    else el.classList.remove("bg-white/10");
+  });
+}
+
+function setHeader(id) {
+  const title = document.getElementById("pageTitle");
+  const subtitle = document.getElementById("pageSubtitle");
+  const map = {
+    dashboard: { title: "Dashboard", subtitle: "Your plan at a glance" },
+    subjects: { title: "Subjects", subtitle: "Organize your study areas" },
+    tasks: { title: "Tasks", subtitle: "Track what needs to be done" },
+    games: { title: "Mind Games", subtitle: "Quick brain warm-ups" },
+    focus: { title: "Focus Suite", subtitle: "Timers, ambient sounds, and study browser" },
+    challenge: { title: "Daily Challenge", subtitle: "Complete a quick win today" },
+    schedule: { title: "Schedule Planner", subtitle: "Plan focus sessions for the week" },
+  };
+  if (title && map[id]) title.textContent = map[id].title;
+  if (subtitle && map[id]) subtitle.textContent = map[id].subtitle;
+}
+
+function showPage(id) {
+  if (typeof focusSuite !== 'undefined' && focusSuite?.running && focusSuite?.strict && id !== 'dashboard') return;
+  const pages = Array.from(document.querySelectorAll(".page"));
+  const next = document.getElementById(id);
+  if (!next) return;
+
+  const current = pages.find(p => !p.classList.contains("hidden"));
+  if (current && current !== next) {
+    current.classList.add("is-leave");
+    setTimeout(() => {
+      current.classList.add("hidden");
+      current.classList.remove("is-leave");
+    }, 180);
+  }
+
+  pages.forEach(p => {
+    if (p !== next) p.classList.add("hidden");
+  });
+
+  next.classList.remove("hidden");
+  next.classList.add("is-enter");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      next.classList.remove("is-enter");
+    });
+  });
+
+  setActiveNav(id);
+  setHeader(id);
+  if (id === "dashboard") updateDashboard();
+  if (id === "subjects") renderSubjects();
+  if (id === "tasks") {
+    refreshSubjectDropdown();
+    renderTasks();
+  }
+  if (id === "games") initGamesUI();
+}
+
+function animateList(container) {
+  if (!container) return;
+  const children = Array.from(container.children);
+  children.forEach((el, idx) => {
+    el.classList.add("list-enter");
+    setTimeout(() => {
+      el.classList.add("list-enter-active");
+      el.classList.remove("list-enter");
+    }, 20 + idx * 35);
+  });
+  setTimeout(() => {
+    children.forEach(el => el.classList.remove("list-enter-active"));
+  }, 500);
+}
+
+function openQuickAdd() {
+  showPage("tasks");
+  const input = document.getElementById("taskInput");
+  if (input) input.focus();
+}
+
+function viewTasks() {
+  showPage("tasks");
+}
+
+function updateDailyChallenge() {
+  const challenges = [
+    "Add 1 task due today, then complete it.",
+    "Complete 3 pending tasks.",
+    "Add a new subject and create a task for it.",
+    "Study a subject for 25 minutes using Focus Suite.",
+    "Complete 1 task from each subject.",
+    "Review and update all task due dates.",
+    "Add 5 tasks and mark 2 as completed.",
+    "Use the Focus Suite for a 45-minute session.",
+  ];
+  const text = document.getElementById("dailyChallengeText");
+  if (text) text.textContent = challenges[Math.floor(Math.random() * challenges.length)];
+}
+
+function seedSubjects() {
+  if (subjects.length) return;
+  subjects = [
+    { id: uid(), name: "Math", color: "indigo", targetHours: 6 },
+    { id: uid(), name: "Science", color: "emerald", targetHours: 5 },
+    { id: uid(), name: "English", color: "amber", targetHours: 4 },
+  ];
+  localStorage.setItem("subjects", JSON.stringify(subjects));
+  refreshSubjectDropdown();
+  renderSubjects();
+  updateDashboard();
+}
+
+function addSubject() {
+  const input = document.getElementById("subjectInput");
+  const target = document.getElementById("subjectTarget");
+  const color = document.getElementById("subjectColor");
+  const name = (input?.value || "").trim();
+  if (!name) return;
+  subjects.push({ id: uid(), name, color: color?.value || "indigo", targetHours: Number(target?.value || 0) });
+  localStorage.setItem("subjects", JSON.stringify(subjects));
+  if (input) input.value = "";
+  if (target) target.value = "";
+  refreshSubjectDropdown();
+  renderSubjects();
+  updateDashboard();
+}
+
+function renderSubjects() {
+  const list = document.getElementById("subjectList");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!subjects.length) {
+    list.innerHTML = `<div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-white/70">No subjects yet. Add one to organize your tasks.</div>`;
+    return;
+  }
+  subjects.forEach((sub, i) => {
+    const badge = colorClasses(sub.color);
+    const totals = getSubjectStudyTotals(sub.id);
+    const running = isTimerRunning(sub.id);
+    list.innerHTML += `
+      <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+          <div class="flex items-center gap-3">
+            <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${badge}">${sub.name}</span>
+            <span class="text-sm text-white/60">Target: <span class="text-white/90 font-semibold">${Number(sub.targetHours || 0)}</span> hrs/week</span>
+          </div>
+          <p class="mt-2 text-sm text-white/60">Tasks linked: <span class="text-white/90 font-semibold">${tasks.filter(t => t.subjectId === sub.id).length}</span></p>
+          <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p class="text-xs text-white/60">Today</p>
+              <p id="subToday-${sub.id}" class="mt-1 text-sm font-semibold">${formatDuration(totals.todayMs)}</p>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p class="text-xs text-white/60">Total</p>
+              <p id="subTotal-${sub.id}" class="mt-1 text-sm font-semibold">${formatDuration(totals.totalMs)}</p>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p class="text-xs text-white/60">Status</p>
+              <p id="subStatus-${sub.id}" class="mt-1 text-sm font-semibold ${running ? 'text-emerald-200' : 'text-white/80'}">${running ? 'Studying…' : 'Idle'}</p>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p class="text-xs text-white/60">Break</p>
+              <p id="subBreak-${sub.id}" class="mt-1 text-sm font-semibold text-white/80">—</p>
+            </div>
+          </div>
+          </div>
+          <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+            <button onclick="startSubjectTimer('${sub.id}')" class="anim-btn rounded-xl bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30">Start</button>
+            <button onclick="stopSubjectTimer('${sub.id}')" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">Stop</button>
+            <button onclick="quickBreakSubject('${sub.id}')" class="anim-btn rounded-xl bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/25">Quick break</button>
+            <button onclick="deleteSubject(${i})" class="anim-btn rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/20">Delete</button>
+          </div>
+        </div>
+      </div>`;
+  });
+  animateList(list);
+}
+
+function deleteSubject(i) {
+  const removed = subjects[i];
+  subjects.splice(i, 1);
+  if (removed?.id) tasks = tasks.map(t => (t.subjectId === removed.id ? { ...t, subjectId: "" } : t));
+  localStorage.setItem("subjects", JSON.stringify(subjects));
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  refreshSubjectDropdown();
+  renderSubjects();
+  renderTasks();
+  updateDashboard();
+}
+
+function refreshSubjectDropdown() {
+  const sel = document.getElementById("taskSubject");
+  if (!sel) return;
+  sel.innerHTML = "";
+  sel.innerHTML += `<option value="">No subject</option>`;
+  subjects.forEach(s => {
+    sel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+  });
+
+  const schedSel = document.getElementById('schedSubject');
+  if (schedSel) {
+    schedSel.innerHTML = '';
+    schedSel.innerHTML += `<option value="">Any subject</option>`;
+    subjects.forEach(s => {
+      schedSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+    });
+  }
+}
+
+function addTask() {
+  const input = document.getElementById("taskInput");
+  const subject = document.getElementById("taskSubject");
+  const due = document.getElementById("taskDue");
+  const priority = document.getElementById("taskPriority");
+  const title = (input?.value || "").trim();
+  if (!title) return;
+  tasks.push({ id: uid(), title, completed: false, subjectId: subject?.value || "", dueDate: due?.value || "", priority: priority?.value || "medium", createdAt: Date.now() });
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  if (input) input.value = "";
+  renderTasks();
+  updateDashboard();
+}
+
+function priorityBadge(priority) {
+  const map = {
+    high: "bg-rose-500/15 text-rose-200 border-rose-500/20",
+    medium: "bg-amber-500/15 text-amber-200 border-amber-500/20",
+    low: "bg-emerald-500/15 text-emerald-200 border-emerald-500/20",
+  };
+  return map[priority] || map.medium;
+}
+
+function getSubjectById(id) {
+  return subjects.find(s => s.id === id);
+}
+
+function formatDue(dueDate) {
+  if (!dueDate) return "";
+  const d = new Date(dueDate + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function renderTasks() {
+  const list = document.getElementById("taskList");
+  if (!list) return;
+  const filterStatus = document.getElementById("filterStatus")?.value || "all";
+  const filterPriority = document.getElementById("filterPriority")?.value || "all";
+  let view = [...tasks];
+  if (filterStatus === "pending") view = view.filter(t => !t.completed);
+  if (filterStatus === "completed") view = view.filter(t => t.completed);
+  if (filterPriority !== "all") view = view.filter(t => (t.priority || "medium") === filterPriority);
+  view.sort((a, b) => {
+    const ad = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+    const bd = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+    if (ad !== bd) return ad - bd;
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
+  list.innerHTML = "";
+  if (!view.length) {
+    list.innerHTML = `<div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-white/70">No tasks match your filters. Add one to get started.</div>`;
+    return;
+  }
+  view.forEach((task) => {
+    const subj = task.subjectId ? getSubjectById(task.subjectId) : null;
+    const subjBadge = subj ? colorClasses(subj.color) : "bg-white/5 text-white/70 border-white/10";
+    const pBadge = priorityBadge(task.priority || "medium");
+    const dueText = formatDue(task.dueDate);
+    const duePill = dueText ? `<span class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">📅 ${dueText}</span>` : "";
+    list.innerHTML += `
+      <div class="anim-card flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="toggleTaskById('${task.id}')" class="anim-btn text-left text-sm font-semibold ${task.completed ? 'line-through text-white/50' : 'text-white'}">${task.title}</button>
+            <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${pBadge}">${(task.priority || 'medium').toUpperCase()}</span>
+            <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${subjBadge}">${subj ? subj.name : 'No subject'}</span>
+            ${duePill}
+          </div>
+          <p class="mt-2 text-xs text-white/50">${task.completed ? 'Completed' : 'Pending'} • Tap title to toggle</p>
+        </div>
+        <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <button onclick="toggleTaskById('${task.id}')" class="anim-btn rounded-xl ${task.completed ? 'bg-amber-500/15 text-amber-100 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'} px-4 py-2 text-sm font-semibold">${task.completed ? 'Undo' : 'Complete'}</button>
+          <button onclick="deleteTaskById('${task.id}')" class="anim-btn rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/20">Delete</button>
+        </div>
+      </div>`;
+  });
+  animateList(list);
+}
+
+let focusTimerInterval = null;
+let focusSecondsLeft = 25 * 60;
+let focusRunning = false;
+
+const FOCUS_KEYS = {
+  allowlist: 'focusAllowlistV1',
+  schedule: 'focusScheduleV1',
+  focusHistory: 'focusHistoryV1'
+};
+
+let focusSuite = {
+  mode: 'pomodoro',
+  phase: 'idle',
+  running: false,
+  paused: false,
+  strict: false,
+  startedAt: 0,
+  remainingSec: 25 * 60,
+  elapsedSec: 0,
+  pomodoro: {
+    focusMin: 25,
+    shortMin: 5,
+    longMin: 15,
+    cycle: 0,
+  },
+  timerMin: 30,
+  interval: null,
+};
+
+let ambient = {
+  ctx: null,
+  gain: null,
+  src: null,
+  playing: false,
+  preset: 'off'
+};
+
+function loadAllowlist() {
+  const raw = localStorage.getItem(FOCUS_KEYS.allowlist);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.map(x => String(x || '').trim().toLowerCase()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function saveAllowlistFromInput() {
+  const input = document.getElementById('allowDomains');
+  const raw = String(input?.value || '');
+  const parts = raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  localStorage.setItem(FOCUS_KEYS.allowlist, JSON.stringify(parts));
+}
+
+function saveAllowlist() {
+  saveAllowlistFromInput();
+  openStudyUrl();
+}
+
+function isAllowedUrl(url) {
+  const allow = loadAllowlist();
+  if (!allow.length) return true;
+  let host = '';
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return allow.some(d => host === d || host.endsWith('.' + d));
+}
+
+function openStudyUrl() {
+  const url = document.getElementById('studyUrl').value.trim();
+  const frame = document.getElementById('studyFrame');
+  const blocked = document.getElementById('studyBlocked');
+  const loadError = document.getElementById('studyLoadError');
+  const openNewBtn = document.getElementById('openInNewTabBtn');
+  if (!url) return;
+  let finalUrl = url;
+  if (!/^https?:\/\//i.test(url)) finalUrl = 'https://' + url;
+  const domain = (new URL(finalUrl)).hostname.replace(/^www\./, '');
+  const allowRaw = localStorage.getItem(FOCUS_KEYS.allowlist);
+  const allowlist = allowRaw ? String(allowRaw).split(',').map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+  const allowed = allowlist.some(d => domain.includes(d));
+  if (focusSuite.running && focusSuite.strict && !allowed) {
+    if (blocked) blocked.classList.remove('hidden');
+    if (loadError) loadError.classList.add('hidden');
+    if (frame) frame.style.display = 'none';
+    return;
+  }
+  if (blocked) blocked.classList.add('hidden');
+  if (loadError) loadError.classList.add('hidden');
+  if (frame) frame.style.display = '';
+  frame.src = finalUrl;
+  // Detect load errors after a short delay
+  setTimeout(() => {
+    try {
+      if (!frame.contentWindow?.location?.href || frame.contentWindow.location.href === 'about:blank') {
+        if (loadError) {
+          loadError.classList.remove('hidden');
+          if (openNewBtn) {
+            openNewBtn.onclick = () => window.open(finalUrl, '_blank');
+          }
+        }
+        if (frame) frame.style.display = 'none';
+      }
+    } catch {
+      if (loadError) {
+        loadError.classList.remove('hidden');
+        if (openNewBtn) {
+          openNewBtn.onclick = () => window.open(finalUrl, '_blank');
+        }
+      }
+      if (frame) frame.style.display = 'none';
+    }
+  }, 3000);
+}
+
+function updateAllowlistInputUI() {
+  const input = document.getElementById('allowDomains');
+  if (!input) return;
+  const allow = loadAllowlist();
+  input.value = allow.join(', ');
+}
+
+function requestNotify() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
+}
+
+function notify(title, body) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, { body });
+  } catch {
+  }
+}
+
+function applyStrictUI() {
+  const strict = Boolean(focusSuite.strict && focusSuite.running);
+  const sidebar = document.getElementById('sidebar');
+  const topbar = document.getElementById('topbar');
+  if (sidebar) sidebar.style.display = strict ? 'none' : '';
+  if (topbar) topbar.style.display = strict ? 'none' : '';
+}
+
+function setFocusMode(mode) {
+  if (focusSuite.running && focusSuite.strict) return;
+  focusSuite.mode = mode;
+  focusSuite.phase = 'idle';
+  focusSuite.running = false;
+  focusSuite.paused = false;
+  if (focusSuite.interval) {
+    clearInterval(focusSuite.interval);
+    focusSuite.interval = null;
+  }
+  if (mode === 'timer') {
+    const min = Number(document.getElementById('timerMin')?.value || 30);
+    focusSuite.timerMin = Math.max(1, min);
+    focusSuite.remainingSec = focusSuite.timerMin * 60;
+  }
+  if (mode === 'pomodoro') {
+    const f = Number(document.getElementById('pomFocusMin')?.value || 25);
+    const s = Number(document.getElementById('pomShortMin')?.value || 5);
+    const l = Number(document.getElementById('pomLongMin')?.value || 15);
+    focusSuite.pomodoro.focusMin = Math.max(1, f);
+    focusSuite.pomodoro.shortMin = Math.max(1, s);
+    focusSuite.pomodoro.longMin = Math.max(1, l);
+    focusSuite.pomodoro.cycle = 0;
+    focusSuite.remainingSec = focusSuite.pomodoro.focusMin * 60;
+  }
+  if (mode === 'stopwatch') {
+    focusSuite.elapsedSec = 0;
+  }
+  updateFocusSuiteUI();
+  applyStrictUI();
+}
+
+function formatMMSS2(sec) {
+  const s = Math.max(0, Math.floor(Number(sec) || 0));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+}
+
+function updateFocusSuiteUI() {
+  const timerCfg = document.getElementById('timerConfig');
+  const pomoCfg = document.getElementById('pomodoroConfig');
+  if (timerCfg) timerCfg.classList.toggle('hidden', focusSuite.mode !== 'timer');
+  if (pomoCfg) pomoCfg.classList.toggle('hidden', focusSuite.mode !== 'pomodoro');
+
+  const main = document.getElementById('focusMainLabel');
+  const sub = document.getElementById('focusSubLabel');
+  const strictToggle = document.getElementById('strictToggle');
+  if (strictToggle) {
+    strictToggle.checked = Boolean(focusSuite.strict);
+    strictToggle.disabled = Boolean(focusSuite.running);
+  }
+
+  if (main) {
+    if (focusSuite.mode === 'stopwatch') main.textContent = formatMMSS2(focusSuite.elapsedSec);
+    else main.textContent = formatMMSS2(focusSuite.remainingSec);
+  }
+  if (sub) {
+    if (!focusSuite.running) sub.textContent = 'Ready';
+    else if (focusSuite.paused) sub.textContent = 'Paused';
+    else if (focusSuite.mode === 'pomodoro') {
+      if (focusSuite.phase === 'focus') sub.textContent = 'Deep focus';
+      else if (focusSuite.phase === 'short') sub.textContent = 'Short break';
+      else if (focusSuite.phase === 'long') sub.textContent = 'Long break';
+      else sub.textContent = 'Running';
+    } else {
+      sub.textContent = 'Running';
+    }
+  }
+
+  const active = document.getElementById('modeTimerBtn');
+  const sw = document.getElementById('modeStopwatchBtn');
+  const pomo = document.getElementById('modePomodoroBtn');
+  const setActive = (btn, on) => {
+    if (!btn) return;
+    btn.classList.toggle('bg-emerald-500/20', on);
+    btn.classList.toggle('text-emerald-100', on);
+  };
+  setActive(active, focusSuite.mode === 'timer');
+  setActive(sw, focusSuite.mode === 'stopwatch');
+  setActive(pomo, focusSuite.mode === 'pomodoro');
+
+  const startBtn = document.getElementById('focusStartBtn2');
+  const pauseBtn = document.getElementById('focusPauseBtn');
+  const stopBtn = document.getElementById('focusStopBtn');
+  if (startBtn) startBtn.disabled = Boolean(focusSuite.running);
+  if (pauseBtn) pauseBtn.disabled = !focusSuite.running;
+  if (pauseBtn) pauseBtn.textContent = focusSuite.paused ? 'Resume' : 'Pause';
+  if (stopBtn) stopBtn.disabled = !focusSuite.running;
+}
+
+function setStrictFromUI() {
+  if (focusSuite.running) return;
+  focusSuite.strict = Boolean(document.getElementById('strictToggle')?.checked);
+  applyStrictUI();
+}
+
+function tickFocusSuite() {
+  if (!focusSuite.running || focusSuite.paused) return;
+  if (focusSuite.mode === 'stopwatch') {
+    focusSuite.elapsedSec += 1;
+    updateFocusSuiteUI();
+    return;
+  }
+  focusSuite.remainingSec = Math.max(0, focusSuite.remainingSec - 1);
+  if (focusSuite.remainingSec === 0) {
+    onFocusPhaseEnd();
+  }
+  updateFocusSuiteUI();
+}
+
+function startFocusSession() {
+  focusSuite.strict = Boolean(document.getElementById('strictToggle')?.checked);
+  if (focusSuite.mode === 'timer') {
+    focusSuite.timerMin = Math.max(1, Number(document.getElementById('timerMin')?.value || 30));
+    focusSuite.remainingSec = focusSuite.timerMin * 60;
+    focusSuite.phase = 'timer';
+  }
+  if (focusSuite.mode === 'pomodoro') {
+    focusSuite.pomodoro.focusMin = Math.max(1, Number(document.getElementById('pomFocusMin')?.value || 25));
+    focusSuite.pomodoro.shortMin = Math.max(1, Number(document.getElementById('pomShortMin')?.value || 5));
+    focusSuite.pomodoro.longMin = Math.max(1, Number(document.getElementById('pomLongMin')?.value || 15));
+    focusSuite.phase = 'focus';
+    focusSuite.remainingSec = focusSuite.pomodoro.focusMin * 60;
+  }
+  if (focusSuite.mode === 'stopwatch') {
+    focusSuite.phase = 'stopwatch';
+    focusSuite.elapsedSec = 0;
+  }
+  focusSuite.running = true;
+  focusSuite.paused = false;
+  focusSuite.startedAt = Date.now();
+  if (focusSuite.interval) clearInterval(focusSuite.interval);
+  focusSuite.interval = setInterval(tickFocusSuite, 1000);
+  requestNotify();
+  applyStrictUI();
+  updateFocusSuiteUI();
+  openStudyUrl();
+}
+
+function togglePauseFocus() {
+  if (!focusSuite.running) return;
+  focusSuite.paused = !focusSuite.paused;
+  updateFocusSuiteUI();
+}
+
+function stopFocusSession() {
+  if (!focusSuite.running) return;
+  if (focusSuite.strict) return;
+  completeFocusSession('stopped');
+}
+
+function completeFocusSession(reason) {
+  const historyRaw = localStorage.getItem(FOCUS_KEYS.focusHistory);
+  let history = [];
+  if (historyRaw) {
+    try { history = JSON.parse(historyRaw) || []; } catch { history = []; }
+  }
+  if (!Array.isArray(history)) history = [];
+  const seconds = focusSuite.mode === 'stopwatch' ? focusSuite.elapsedSec : (focusSuite.mode === 'pomodoro' ? focusSuite.pomodoro.focusMin * 60 : focusSuite.timerMin * 60) - focusSuite.remainingSec;
+  history.unshift({ id: uid(), at: Date.now(), mode: focusSuite.mode, phase: focusSuite.phase, seconds: Math.max(0, seconds), reason: reason || 'done' });
+  history = history.slice(0, 60);
+  localStorage.setItem(FOCUS_KEYS.focusHistory, JSON.stringify(history));
+
+  focusSuite.running = false;
+  focusSuite.paused = false;
+  focusSuite.phase = 'idle';
+  focusSuite.startedAt = 0;
+  if (focusSuite.interval) {
+    clearInterval(focusSuite.interval);
+    focusSuite.interval = null;
+  }
+  applyStrictUI();
+  updateFocusSuiteUI();
+  renderDigitalWellbeing();
+}
+
+function onFocusPhaseEnd() {
+  if (focusSuite.mode === 'timer') {
+    notify('Timer done', 'Nice work. Take a short break.');
+    completeFocusSession('done');
+    return;
+  }
+  if (focusSuite.mode === 'pomodoro') {
+    if (focusSuite.phase === 'focus') {
+      focusSuite.pomodoro.cycle += 1;
+      const isLong = focusSuite.pomodoro.cycle % 4 === 0;
+      focusSuite.phase = isLong ? 'long' : 'short';
+      focusSuite.remainingSec = (isLong ? focusSuite.pomodoro.longMin : focusSuite.pomodoro.shortMin) * 60;
+      notify('Break time', isLong ? 'Long break started.' : 'Short break started.');
+      return;
+    }
+    if (focusSuite.phase === 'short' || focusSuite.phase === 'long') {
+      focusSuite.phase = 'focus';
+      focusSuite.remainingSec = focusSuite.pomodoro.focusMin * 60;
+      notify('Back to focus', 'New focus block started.');
+      return;
+    }
+  }
+}
+
+function ensureAmbientContext() {
+  if (ambient.ctx) return;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return;
+  ambient.ctx = new Ctx();
+  ambient.gain = ambient.ctx.createGain();
+  ambient.gain.gain.value = 0.15;
+  ambient.gain.connect(ambient.ctx.destination);
+}
+
+function makeNoiseBuffer(ctx) {
+  const length = ctx.sampleRate * 2;
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  return buffer;
+}
+
+function startAmbientPreset(preset) {
+  ensureAmbientContext();
+  if (!ambient.ctx || !ambient.gain) return;
+  stopAmbient();
+  if (preset === 'off') return;
+
+  const ctx = ambient.ctx;
+  const src = ctx.createBufferSource();
+  src.buffer = makeNoiseBuffer(ctx);
+  src.loop = true;
+
+  let node = src;
+  if (preset === 'brown' || preset === 'pink') {
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = preset === 'brown' ? 220 : 800;
+    node.connect(filter);
+    node = filter;
+  }
+  if (preset === 'tone') {
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 174;
+    osc.connect(ambient.gain);
+    osc.start();
+    ambient.src = { stop: () => osc.stop() };
+    ambient.playing = true;
+    return;
+  }
+
+  node.connect(ambient.gain);
+  src.start();
+  ambient.src = src;
+  ambient.playing = true;
+}
+
+function stopAmbient() {
+  try {
+    if (ambient.src && typeof ambient.src.stop === 'function') ambient.src.stop();
+  } catch {
+  }
+  ambient.src = null;
+  ambient.playing = false;
+}
+
+let ambientAudio = null;
+let ambientSource = null;
+
+function toggleAmbient() {
+  const preset = document.getElementById('ambientPreset').value;
+  const vol = document.getElementById('ambientVol').value / 100;
+  if (preset === 'off') {
+    if (ambientAudio) {
+      ambientAudio.pause();
+      ambientAudio = null;
+      ambientSource = null;
+    }
+    return;
+  }
+  // Placeholder URLs; replace with real audio files or streaming URLs
+  const urls = {
+    brown: 'https://www.soundjay.com/misc/sounds/brown-noise.mp3',
+    pink: 'https://www.soundjay.com/misc/sounds/pink-noise.mp3',
+    tone: 'https://www.soundjay.com/misc/sounds/1000hz-tone.mp3',
+    ocean: 'https://www.soundjay.com/nature/sounds/ocean-wave-1.mp3',
+    koel: 'https://www.soundjay.com/nature/sounds/bird-1.mp3',
+    lofi: 'https://www.soundjay.com/misc/sounds/lofi-hip-hop.mp3',
+    'classical-lofi': 'https://www.soundjay.com/misc/sounds/classical-lofi.mp3',
+    rain: 'https://www.soundjay.com/nature/sounds/rain-01.mp3',
+    cafe: 'https://www.soundjay.com/misc/sounds/cafe-ambience.mp3',
+  };
+  const url = urls[preset];
+  if (!url) return;
+  if (ambientAudio && ambientSource === preset) {
+    ambientAudio.pause();
+    ambientAudio = null;
+    ambientSource = null;
+    return;
+  }
+  if (ambientAudio) ambientAudio.pause();
+  ambientAudio = new Audio(url);
+  ambientAudio.loop = true;
+  ambientAudio.volume = vol;
+  ambientAudio.play().catch(() => {});
+  ambientSource = preset;
+}
+
+function onAmbientVolChange() {
+  if (ambientAudio) {
+    ambientAudio.volume = document.getElementById('ambientVol').value / 100;
+  }
+}
+
+function loadSchedule() {
+  const raw = localStorage.getItem(FOCUS_KEYS.schedule);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSchedule(arr) {
+  localStorage.setItem(FOCUS_KEYS.schedule, JSON.stringify(arr));
+}
+
+function addScheduleItem() {
+  const day = String(document.getElementById('schedDay')?.value || 'mon');
+  const time = String(document.getElementById('schedTime')?.value || '');
+  const minutes = Math.max(5, Number(document.getElementById('schedMin')?.value || 45));
+  const subjectId = String(document.getElementById('schedSubject')?.value || '');
+  if (!time) return;
+  const items = loadSchedule();
+  items.push({ id: uid(), day, time, minutes, subjectId });
+  saveSchedule(items);
+  renderSchedule();
+}
+
+function deleteScheduleItem(id) {
+  const items = loadSchedule().filter(x => x.id !== id);
+  saveSchedule(items);
+  renderSchedule();
+}
+
+function dayLabel(d) {
+  const map = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+  return map[d] || String(d);
+}
+
+function renderSchedule() {
+  const list = document.getElementById('scheduleList');
+  if (!list) return;
+  const items = loadSchedule();
+  const order = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 7 };
+  items.sort((a, b) => (order[a.day] || 9) - (order[b.day] || 9) || String(a.time).localeCompare(String(b.time)));
+  list.innerHTML = '';
+  if (!items.length) {
+    list.innerHTML = `<div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">No sessions scheduled yet.</div>`;
+    return;
+  }
+  items.forEach(it => {
+    const subj = it.subjectId ? getSubjectById(it.subjectId) : null;
+    const badge = subj ? colorClasses(subj.color) : 'bg-white/5 text-white/70 border-white/10';
+    list.innerHTML += `
+      <div class="anim-card flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-white">${dayLabel(it.day)} • ${it.time} • ${Number(it.minutes)} min</p>
+          <p class="mt-1 text-xs text-white/60">Subject: <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badge}">${subj ? subj.name : 'Any'}</span></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="prefillFocusFromSchedule('${it.id}')" class="anim-btn rounded-xl bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/30">Use</button>
+          <button onclick="deleteScheduleItem('${it.id}')" class="anim-btn rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200 hover:bg-rose-500/20">Delete</button>
+        </div>
+      </div>`;
+  });
+}
+
+function prefillFocusFromSchedule(id) {
+  const items = loadSchedule();
+  const it = items.find(x => x.id === id);
+  if (!it) return;
+  setFocusMode('timer');
+  const t = document.getElementById('timerMin');
+  if (t) t.value = String(it.minutes);
+  focusSuite.timerMin = Math.max(1, Number(it.minutes || 30));
+  focusSuite.remainingSec = focusSuite.timerMin * 60;
+  updateFocusSuiteUI();
+}
+
+function formatMMSS(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function updateFocusTimerUI() {
+  const label = document.getElementById('focusTimerLabel');
+  const btn = document.getElementById('focusStartBtn');
+  if (label) label.textContent = formatMMSS(focusSecondsLeft);
+  if (btn) btn.textContent = focusRunning ? 'Pause' : 'Start';
+}
+
+function tickFocusTimer() {
+  if (!focusRunning) return;
+  focusSecondsLeft = Math.max(0, focusSecondsLeft - 1);
+  updateFocusTimerUI();
+  if (focusSecondsLeft === 0) {
+    focusRunning = false;
+    updateFocusTimerUI();
+  }
+}
+
+function toggleFocusTimer() {
+  focusRunning = !focusRunning;
+  updateFocusTimerUI();
+  if (!focusTimerInterval) focusTimerInterval = setInterval(tickFocusTimer, 1000);
+}
+
+function resetFocusTimer() {
+  focusRunning = false;
+  focusSecondsLeft = 25 * 60;
+  updateFocusTimerUI();
+}
+
+const STUDY_KEYS = {
+  log: 'studyLogV1'
+};
+
+let studyTimers = {};
+let studyTickInterval = null;
+
+function todayKey(d = new Date()) {
+  return d.toISOString().slice(0, 10);
+}
+
+function loadStudyLog() {
+  const raw = localStorage.getItem(STUDY_KEYS.log);
+  if (!raw) return { bySubject: {} };
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return { bySubject: {} };
+    if (!parsed.bySubject || typeof parsed.bySubject !== 'object') parsed.bySubject = {};
+    return parsed;
+  } catch {
+    return { bySubject: {} };
+  }
+}
+
+function saveStudyLog(log) {
+  localStorage.setItem(STUDY_KEYS.log, JSON.stringify(log));
+}
+
+function ensureSubjectLog(log, subjectId) {
+  if (!log.bySubject[subjectId]) log.bySubject[subjectId] = { days: {} };
+  if (!log.bySubject[subjectId].days || typeof log.bySubject[subjectId].days !== 'object') log.bySubject[subjectId].days = {};
+  return log.bySubject[subjectId];
+}
+
+function addStudyMs(subjectId, ms, when = new Date()) {
+  const safeMs = Math.max(0, Number(ms) || 0);
+  if (!subjectId || safeMs <= 0) return;
+  const log = loadStudyLog();
+  const sub = ensureSubjectLog(log, subjectId);
+  const key = todayKey(when);
+  sub.days[key] = Number(sub.days[key] || 0) + safeMs;
+  saveStudyLog(log);
+}
+
+function isTimerRunning(subjectId) {
+  return Boolean(studyTimers[subjectId]?.running);
+}
+
+function getRunningDeltaMs(subjectId) {
+  const t = studyTimers[subjectId];
+  if (!t || !t.running || !t.startedAt) return 0;
+  return Math.max(0, Date.now() - t.startedAt);
+}
+
+function formatDuration(ms) {
+  const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function getSubjectStudyTotals(subjectId) {
+  const log = loadStudyLog();
+  const sub = log.bySubject[subjectId];
+  const days = sub?.days && typeof sub.days === 'object' ? sub.days : {};
+  const tKey = todayKey();
+  const todayMs = Number(days[tKey] || 0) + getRunningDeltaMs(subjectId);
+  let totalMs = getRunningDeltaMs(subjectId);
+  Object.values(days).forEach(v => {
+    totalMs += Number(v || 0);
+  });
+  return { todayMs, totalMs };
+}
+
+function startSubjectTimer(subjectId) {
+  if (!subjectId) return;
+  const t = studyTimers[subjectId] || {};
+  if (t.running) return;
+  studyTimers[subjectId] = {
+    running: true,
+    startedAt: Date.now(),
+    breakUntil: t.breakUntil || 0
+  };
+  if (!studyTickInterval) {
+    studyTickInterval = setInterval(() => {
+      updateStudyTimerUI();
+    }, 1000);
+  }
+  updateStudyTimerUI();
+}
+
+function stopSubjectTimer(subjectId) {
+  if (!subjectId) return;
+  const t = studyTimers[subjectId];
+  if (!t || !t.running) return;
+  const delta = Math.max(0, Date.now() - t.startedAt);
+  addStudyMs(subjectId, delta);
+  studyTimers[subjectId] = { running: false, startedAt: 0, breakUntil: t.breakUntil || 0 };
+  updateStudyTimerUI();
+  renderDigitalWellbeing();
+}
+
+function quickBreakSubject(subjectId) {
+  if (!subjectId) return;
+  if (isTimerRunning(subjectId)) stopSubjectTimer(subjectId);
+  const prev = studyTimers[subjectId] || { running: false, startedAt: 0, breakUntil: 0 };
+  studyTimers[subjectId] = {
+    running: false,
+    startedAt: 0,
+    breakUntil: Date.now() + 5 * 60 * 1000
+  };
+  if (!studyTickInterval) {
+    studyTickInterval = setInterval(() => {
+      updateStudyTimerUI();
+    }, 1000);
+  }
+  updateStudyTimerUI();
+}
+
+function updateStudyTimerUI() {
+  subjects.forEach((sub) => {
+    const totals = getSubjectStudyTotals(sub.id);
+    const todayEl = document.getElementById(`subToday-${sub.id}`);
+    const totalEl = document.getElementById(`subTotal-${sub.id}`);
+    const statusEl = document.getElementById(`subStatus-${sub.id}`);
+    const breakEl = document.getElementById(`subBreak-${sub.id}`);
+    if (todayEl) todayEl.textContent = formatDuration(totals.todayMs);
+    if (totalEl) totalEl.textContent = formatDuration(totals.totalMs);
+
+    const t = studyTimers[sub.id];
+    const running = Boolean(t?.running);
+    const breakUntil = Number(t?.breakUntil || 0);
+    const breakLeft = Math.max(0, breakUntil - Date.now());
+
+    if (statusEl) {
+      statusEl.textContent = running ? 'Studying…' : (breakLeft > 0 ? 'On break' : 'Idle');
+      statusEl.className = 'mt-1 text-sm font-semibold ' + (running ? 'text-emerald-200' : (breakLeft > 0 ? 'text-amber-200' : 'text-white/80'));
+    }
+    if (breakEl) {
+      breakEl.textContent = breakLeft > 0 ? formatDuration(breakLeft) : '—';
+    }
+  });
+
+  const anyRunning = subjects.some(s => isTimerRunning(s.id));
+  const anyBreak = subjects.some(s => (studyTimers[s.id]?.breakUntil || 0) > Date.now());
+  if (!anyRunning && !anyBreak && studyTickInterval) {
+    clearInterval(studyTickInterval);
+    studyTickInterval = null;
+  }
+}
+
+function getLast7DaysKeys() {
+  const out = [];
+  const d = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const dd = new Date(d);
+    dd.setDate(d.getDate() - i);
+    out.push(todayKey(dd));
+  }
+  return out;
+}
+
+function subjectWeekSeriesMs(subjectId) {
+  const log = loadStudyLog();
+  const days = log.bySubject[subjectId]?.days || {};
+  const keys = getLast7DaysKeys();
+  return keys.map(k => Number(days[k] || 0) + (k === todayKey() ? getRunningDeltaMs(subjectId) : 0));
+}
+
+function renderDigitalWellbeing() {
+  const grid = document.getElementById('wellbeingGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  if (!subjects.length) {
+    grid.innerHTML = `<div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-white/70 lg:col-span-3">Add subjects to start tracking study time.</div>`;
+    return;
+  }
+
+  const keys = getLast7DaysKeys();
+  subjects.forEach((sub) => {
+    const badge = colorClasses(sub.color);
+    const series = subjectWeekSeriesMs(sub.id);
+    const max = Math.max(1, ...series);
+    const weekTotal = series.reduce((a, b) => a + b, 0);
+    const totals = getSubjectStudyTotals(sub.id);
+    const bars = series.map((v, idx) => {
+      const h = Math.max(6, Math.round((v / max) * 52));
+      const label = keys[idx].slice(5);
+      return `<div class="flex flex-1 flex-col items-center gap-1">
+        <div class="w-full rounded-lg bg-white/5 border border-white/10 overflow-hidden" style="height: 56px; display:flex; align-items:flex-end;">
+          <div class="w-full rounded-lg bg-gradient-to-t from-indigo-500/70 via-fuchsia-500/60 to-emerald-400/60" style="height: ${h}px;"></div>
+        </div>
+        <p class="text-[10px] text-white/50">${label}</p>
+      </div>`;
+    }).join('');
+
+    grid.innerHTML += `
+      <div class="anim-card rounded-2xl border border-white/10 bg-white/5 p-5 text-white shadow-soft">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${badge}">${sub.name}</span>
+            <p class="mt-2 text-xs text-white/60">Today: <span class="text-white/90 font-semibold">${formatDuration(totals.todayMs)}</span> • Week: <span class="text-white/90 font-semibold">${formatDuration(weekTotal)}</span></p>
+          </div>
+          <button onclick="showPage('subjects')" class="anim-btn rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/90 hover:bg-white/10">Open</button>
+        </div>
+        <div class="mt-4 flex gap-2">${bars}</div>
+      </div>`;
+  });
+}
+
+function flushRunningStudyTimers() {
+  Object.keys(studyTimers).forEach((subjectId) => {
+    const t = studyTimers[subjectId];
+    if (!t?.running) return;
+    const delta = Math.max(0, Date.now() - t.startedAt);
+    addStudyMs(subjectId, delta);
+    studyTimers[subjectId] = { running: false, startedAt: 0, breakUntil: t.breakUntil || 0 };
+  });
+}
+
+window.addEventListener('beforeunload', () => {
+  flushRunningStudyTimers();
+});
+
+const GAME_KEYS = {
+  mathBest: 'mathSprintBest',
+  scrambleStats: 'scrambleStats',
+  guessStats: 'guessWordStats',
+  hangStats: 'hangmanStats',
+  numStats: 'guessNumberStats'
+};
+
+let math = {
+  running: false,
+  timeLeft: 60,
+  score: 0,
+  a: 0,
+  b: 0,
+  op: '+',
+  interval: null,
+};
+
+let scramble = {
+  words: ['focus', 'planner', 'memory', 'study', 'energy', 'skills', 'logic', 'habits', 'coding', 'math', 'science', 'reading'],
+  current: '',
+  scrambled: '',
+  solved: 0,
+  streak: 0,
+};
+
+let guessWord = {
+  bank: [
+    { w: 'focus', h: 'Staying on task' },
+    { w: 'logic', h: 'Reasoning skill' },
+    { w: 'habit', h: 'Repeated action' },
+    { w: 'study', h: 'Learn and revise' },
+    { w: 'brain', h: 'Your supercomputer' },
+    { w: 'notes', h: 'Short written reminders' },
+    { w: 'math', h: 'Numbers and patterns' },
+    { w: 'read', h: 'Books and comprehension' },
+    { w: 'plan', h: 'Decide in advance' },
+    { w: 'sleep', h: 'Recovery for memory' },
+  ],
+  answer: '',
+  hint: '',
+  chances: 5,
+  history: [],
+  wins: 0,
+  losses: 0,
+  streak: 0,
+  locked: false,
+};
+
+let guessNum = {
+  answer: 0,
+  triesLeft: 7,
+  history: [],
+  wins: 0,
+  losses: 0,
+  best: null,
+  streak: 0,
+  locked: false,
+};
+
+let hang = {
+  bank: [
+    { w: 'planner', h: 'Helps you organize tasks' },
+    { w: 'science', h: 'Experiments and discovery' },
+    { w: 'memory', h: 'Helps you recall' },
+    { w: 'reading', h: 'Skill for understanding text' },
+    { w: 'coding', h: 'Writing programs' },
+    { w: 'energy', h: 'You need it to focus' },
+  ],
+  answer: '',
+  hint: '',
+  lives: 6,
+  guessed: new Set(),
+  wrong: [],
+  wins: 0,
+  losses: 0,
+  streak: 0,
+  locked: false,
+};
+
+function initGamesUI() {
+  const best = Number(localStorage.getItem(GAME_KEYS.mathBest) || 0);
+  const mathBestEl = document.getElementById('mathBest');
+  if (mathBestEl) mathBestEl.textContent = String(best);
+  const statsRaw = localStorage.getItem(GAME_KEYS.scrambleStats);
+  if (statsRaw) {
+    try {
+      const stats = JSON.parse(statsRaw);
+      scramble.solved = Number(stats.solved || 0);
+      scramble.streak = Number(stats.streak || 0);
+    } catch {
+      scramble.solved = 0;
+      scramble.streak = 0;
+    }
+  }
+  updateScrambleUI();
+  if (!scramble.current) newScramble();
+  if (!math.running) {
+    renderMathUI();
+  }
+
+  const gRaw = localStorage.getItem(GAME_KEYS.guessStats);
+  if (gRaw) {
+    try {
+      const st = JSON.parse(gRaw);
+      guessWord.wins = Number(st.wins || 0);
+      guessWord.losses = Number(st.losses || 0);
+      guessWord.streak = Number(st.streak || 0);
+    } catch {
+      guessWord.wins = 0;
+      guessWord.losses = 0;
+      guessWord.streak = 0;
+    }
+  }
+  if (!guessWord.answer) newGuessWord();
+  renderGuessUI();
+
+  const hRaw = localStorage.getItem(GAME_KEYS.hangStats);
+  if (hRaw) {
+    try {
+      const st = JSON.parse(hRaw);
+      hang.wins = Number(st.wins || 0);
+      hang.losses = Number(st.losses || 0);
+      hang.streak = Number(st.streak || 0);
+    } catch {
+      hang.wins = 0;
+      hang.losses = 0;
+      hang.streak = 0;
+    }
+  }
+  if (!hang.answer) newHangman();
+  renderHangUI();
+
+  const nRaw = localStorage.getItem(GAME_KEYS.numStats);
+  if (nRaw) {
+    try {
+      const st = JSON.parse(nRaw);
+      guessNum.wins = Number(st.wins || 0);
+      guessNum.losses = Number(st.losses || 0);
+      guessNum.streak = Number(st.streak || 0);
+      const bestTries = st.bestTries;
+      guessNum.best = (bestTries === null || bestTries === undefined || bestTries === '') ? null : Number(bestTries);
+      if (Number.isNaN(guessNum.best)) guessNum.best = null;
+    } catch {
+      guessNum.wins = 0;
+      guessNum.losses = 0;
+      guessNum.streak = 0;
+      guessNum.best = null;
+    }
+  }
+  if (!guessNum.answer) newGuessNumber();
+  renderGuessNumberUI();
+}
+
+function persistGuessNumberStats() {
+  localStorage.setItem(GAME_KEYS.numStats, JSON.stringify({
+    wins: guessNum.wins,
+    losses: guessNum.losses,
+    streak: guessNum.streak,
+    bestTries: guessNum.best
+  }));
+}
+
+function renderGuessNumberUI() {
+  const tries = document.getElementById('numTries');
+  const wins = document.getElementById('numWins');
+  const losses = document.getElementById('numLosses');
+  const best = document.getElementById('numBest');
+  const streak = document.getElementById('numStreak');
+  const history = document.getElementById('numHistory');
+  if (tries) tries.textContent = String(guessNum.triesLeft);
+  if (wins) wins.textContent = String(guessNum.wins);
+  if (losses) losses.textContent = String(guessNum.losses);
+  if (streak) streak.textContent = String(guessNum.streak);
+  if (best) best.textContent = (guessNum.best === null || guessNum.best === undefined) ? '—' : String(guessNum.best);
+  if (history) history.textContent = guessNum.history.length ? guessNum.history.join(', ') : '—';
+}
+
+function newGuessNumber() {
+  guessNum.answer = Math.floor(1 + Math.random() * 100);
+  guessNum.triesLeft = 7;
+  guessNum.history = [];
+  guessNum.locked = false;
+  const input = document.getElementById('numInput');
+  if (input) input.value = '';
+  const feedback = document.getElementById('numFeedback');
+  if (feedback) feedback.textContent = 'Tip: press Enter to submit.';
+  renderGuessNumberUI();
+}
+
+function onGuessNumberKeydown(e) {
+  if (e.key === 'Enter') submitGuessNumber();
+}
+
+function submitGuessNumber() {
+  if (guessNum.locked) return;
+  const input = document.getElementById('numInput');
+  const feedback = document.getElementById('numFeedback');
+  const raw = (input?.value || '').trim();
+  const n = Number(raw);
+  if (!raw || Number.isNaN(n)) {
+    if (feedback) feedback.textContent = 'Type a number.';
+    return;
+  }
+  if (!Number.isFinite(n) || n < 1 || n > 100) {
+    if (feedback) feedback.textContent = 'Pick a number from 1 to 100.';
+    return;
+  }
+
+  guessNum.history.push(Math.trunc(n));
+  guessNum.triesLeft = Math.max(0, guessNum.triesLeft - 1);
+  if (input) input.value = '';
+
+  if (n === guessNum.answer) {
+    const used = 7 - guessNum.triesLeft;
+    guessNum.wins += 1;
+    guessNum.streak += 1;
+    guessNum.locked = true;
+    if (guessNum.best === null || used < guessNum.best) guessNum.best = used;
+    persistGuessNumberStats();
+    if (feedback) feedback.textContent = `Correct! You got it in ${used} ${used === 1 ? 'try' : 'tries'}.`;
+  } else if (guessNum.triesLeft === 0) {
+    guessNum.losses += 1;
+    guessNum.streak = 0;
+    guessNum.locked = true;
+    persistGuessNumberStats();
+    if (feedback) feedback.textContent = `Out of tries. Answer: ${guessNum.answer}`;
+  } else if (n < guessNum.answer) {
+    if (feedback) feedback.textContent = 'Too low. Try higher.';
+  } else {
+    if (feedback) feedback.textContent = 'Too high. Try lower.';
+  }
+
+  renderGuessNumberUI();
+}
+
+function revealGuessNumber() {
+  const feedback = document.getElementById('numFeedback');
+  if (feedback) feedback.textContent = `Answer: ${guessNum.answer}`;
+  guessNum.locked = true;
+  renderGuessNumberUI();
+}
+
+function persistGuessStats() {
+  localStorage.setItem(GAME_KEYS.guessStats, JSON.stringify({ wins: guessWord.wins, losses: guessWord.losses, streak: guessWord.streak }));
+}
+
+function renderGuessUI() {
+  const ch = document.getElementById('guessChances');
+  const hint = document.getElementById('guessHint');
+  const len = document.getElementById('guessLen');
+  const board = document.getElementById('guessBoard');
+  const wins = document.getElementById('guessWins');
+  const losses = document.getElementById('guessLosses');
+  const streak = document.getElementById('guessStreak');
+  if (ch) ch.textContent = String(guessWord.chances);
+  if (hint) hint.textContent = guessWord.hint || '—';
+  if (len) len.textContent = String((guessWord.answer || '').length);
+  if (wins) wins.textContent = String(guessWord.wins);
+  if (losses) losses.textContent = String(guessWord.losses);
+  if (streak) streak.textContent = String(guessWord.streak);
+
+  if (board) {
+    const answer = guessWord.answer;
+    board.innerHTML = '';
+    guessWord.history.forEach((g) => {
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-12 gap-2';
+      for (let i = 0; i < answer.length; i++) {
+        const cell = document.createElement('div');
+        const correct = g[i] === answer[i];
+        cell.className = 'rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center text-sm font-semibold ' + (correct ? 'bg-emerald-500/15 text-emerald-100 border-emerald-500/20' : 'text-white/70');
+        cell.textContent = g[i] ? g[i].toUpperCase() : '';
+        row.appendChild(cell);
+      }
+      board.appendChild(row);
+    });
+  }
+}
+
+function newGuessWord() {
+  const pick = guessWord.bank[Math.floor(Math.random() * guessWord.bank.length)];
+  guessWord.answer = pick.w.toLowerCase();
+  guessWord.hint = pick.h;
+  guessWord.chances = 5;
+  guessWord.history = [];
+  guessWord.locked = false;
+  const input = document.getElementById('guessInput');
+  if (input) input.value = '';
+  const feedback = document.getElementById('guessFeedback');
+  if (feedback) feedback.textContent = 'Tip: press Enter to submit.';
+  renderGuessUI();
+}
+
+function onGuessKeydown(e) {
+  if (e.key === 'Enter') submitGuessWord();
+}
+
+function submitGuessWord() {
+  if (guessWord.locked) return;
+  const input = document.getElementById('guessInput');
+  const feedback = document.getElementById('guessFeedback');
+  const raw = (input?.value || '').trim().toLowerCase();
+  if (!raw) {
+    if (feedback) feedback.textContent = 'Type a guess.';
+    return;
+  }
+  if (raw.length !== guessWord.answer.length) {
+    if (feedback) feedback.textContent = `Word must be ${guessWord.answer.length} letters.`;
+    return;
+  }
+  if (!/^[a-z]+$/.test(raw)) {
+    if (feedback) feedback.textContent = 'Only letters allowed.';
+    return;
+  }
+  guessWord.history.push(raw);
+  guessWord.chances = Math.max(0, guessWord.chances - 1);
+  if (input) input.value = '';
+
+  if (raw === guessWord.answer) {
+    guessWord.wins += 1;
+    guessWord.streak += 1;
+    guessWord.locked = true;
+    persistGuessStats();
+    if (feedback) feedback.textContent = 'Correct! 🎉';
+  } else if (guessWord.chances === 0) {
+    guessWord.losses += 1;
+    guessWord.streak = 0;
+    guessWord.locked = true;
+    persistGuessStats();
+    if (feedback) feedback.textContent = `Out of tries. Answer: ${guessWord.answer.toUpperCase()}`;
+  } else {
+    if (feedback) feedback.textContent = 'Not quite. Keep going!';
+  }
+  renderGuessUI();
+}
+
+function persistHangStats() {
+  localStorage.setItem(GAME_KEYS.hangStats, JSON.stringify({ wins: hang.wins, losses: hang.losses, streak: hang.streak }));
+}
+
+function renderHangUI() {
+  const lives = document.getElementById('hangLives');
+  const word = document.getElementById('hangWord');
+  const hint = document.getElementById('hangHint');
+  const wrong = document.getElementById('hangWrong');
+  const keys = document.getElementById('hangKeys');
+  const wins = document.getElementById('hangWins');
+  const losses = document.getElementById('hangLosses');
+  const streak = document.getElementById('hangStreak');
+
+  if (lives) lives.textContent = String(hang.lives);
+  if (hint) hint.textContent = hang.hint || '—';
+  if (wrong) wrong.textContent = hang.wrong.length ? hang.wrong.join(' ').toUpperCase() : '—';
+  if (wins) wins.textContent = String(hang.wins);
+  if (losses) losses.textContent = String(hang.losses);
+  if (streak) streak.textContent = String(hang.streak);
+
+  if (word) {
+    const masked = hang.answer
+      .split('')
+      .map(ch => (hang.guessed.has(ch) ? ch.toUpperCase() : '_'))
+      .join(' ');
+    word.textContent = masked || '—';
+  }
+
+  if (keys) {
+    keys.innerHTML = '';
+    const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    letters.forEach((ch) => {
+      const btn = document.createElement('button');
+      const used = hang.guessed.has(ch) || hang.wrong.includes(ch) || hang.locked;
+      btn.className = 'anim-btn rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-xs font-semibold text-white/90 hover:bg-white/10 disabled:opacity-50 disabled:hover:bg-white/5';
+      btn.textContent = ch.toUpperCase();
+      btn.disabled = used;
+      btn.onclick = () => guessHangman(ch);
+      keys.appendChild(btn);
+    });
+  }
+}
+
+function newHangman() {
+  const pick = hang.bank[Math.floor(Math.random() * hang.bank.length)];
+  hang.answer = pick.w.toLowerCase();
+  hang.hint = pick.h;
+  hang.lives = 6;
+  hang.guessed = new Set();
+  hang.wrong = [];
+  hang.locked = false;
+  const feedback = document.getElementById('hangFeedback');
+  if (feedback) feedback.textContent = 'Pick letters below.';
+  renderHangUI();
+}
+
+function revealHangman() {
+  const feedback = document.getElementById('hangFeedback');
+  if (feedback) feedback.textContent = `Answer: ${hang.answer.toUpperCase()}`;
+  hang.locked = true;
+  renderHangUI();
+}
+
+function isHangWin() {
+  return hang.answer.split('').every(ch => hang.guessed.has(ch));
+}
+
+function guessHangman(ch) {
+  if (hang.locked) return;
+  const feedback = document.getElementById('hangFeedback');
+  if (hang.answer.includes(ch)) {
+    hang.guessed.add(ch);
+    if (feedback) feedback.textContent = 'Nice!';
+  } else {
+    if (!hang.wrong.includes(ch)) {
+      hang.wrong.push(ch);
+      hang.lives = Math.max(0, hang.lives - 1);
+    }
+    if (feedback) feedback.textContent = 'Wrong letter.';
+  }
+
+  if (isHangWin()) {
+    hang.wins += 1;
+    hang.streak += 1;
+    hang.locked = true;
+    persistHangStats();
+    if (feedback) feedback.textContent = 'You win! 🎉';
+  } else if (hang.lives === 0) {
+    hang.losses += 1;
+    hang.streak = 0;
+    hang.locked = true;
+    persistHangStats();
+    if (feedback) feedback.textContent = `You lost. Answer: ${hang.answer.toUpperCase()}`;
+  }
+
+  renderHangUI();
+}
+
+function renderMathUI() {
+  const q = document.getElementById('mathQuestion');
+  const t = document.getElementById('mathTime');
+  const s = document.getElementById('mathScore');
+  if (q) q.textContent = math.running ? `${math.a} ${math.op} ${math.b}` : '—';
+  if (t) t.textContent = String(math.timeLeft);
+  if (s) s.textContent = String(math.score);
+}
+
+function nextMathQuestion() {
+  const ops = ['+', '-', '×'];
+  math.op = ops[Math.floor(Math.random() * ops.length)];
+  math.a = Math.floor(5 + Math.random() * 35);
+  math.b = Math.floor(2 + Math.random() * 18);
+  if (math.op === '-') {
+    if (math.b > math.a) {
+      const tmp = math.a;
+      math.a = math.b;
+      math.b = tmp;
+    }
+  }
+  renderMathUI();
+}
+
+function mathAnswerValue() {
+  if (math.op === '+') return math.a + math.b;
+  if (math.op === '-') return math.a - math.b;
+  return math.a * math.b;
+}
+
+function startMathSprint() {
+  if (math.running) return;
+  math.running = true;
+  math.timeLeft = 60;
+  math.score = 0;
+  nextMathQuestion();
+  renderMathUI();
+  const feedback = document.getElementById('mathFeedback');
+  if (feedback) feedback.textContent = 'Go!';
+  const answer = document.getElementById('mathAnswer');
+  if (answer) {
+    answer.value = '';
+    answer.focus();
+  }
+  if (math.interval) clearInterval(math.interval);
+  math.interval = setInterval(() => {
+    math.timeLeft = Math.max(0, math.timeLeft - 1);
+    renderMathUI();
+    if (math.timeLeft === 0) {
+      stopMathSprint();
+    }
+  }, 1000);
+}
+
+function stopMathSprint() {
+  math.running = false;
+  if (math.interval) {
+    clearInterval(math.interval);
+    math.interval = null;
+  }
+  const bestKey = GAME_KEYS.mathBest;
+  const best = Number(localStorage.getItem(bestKey) || 0);
+  if (math.score > best) {
+    localStorage.setItem(bestKey, String(math.score));
+  }
+  const mathBestEl = document.getElementById('mathBest');
+  if (mathBestEl) mathBestEl.textContent = String(Math.max(best, math.score));
+  const feedback = document.getElementById('mathFeedback');
+  if (feedback) feedback.textContent = `Time's up! Score: ${math.score}`;
+  renderMathUI();
+}
+
+function onMathAnswerKeydown(e) {
+  if (e.key === 'Enter') submitMathAnswer();
+}
+
+function submitMathAnswer() {
+  if (!math.running) return;
+  const input = document.getElementById('mathAnswer');
+  const feedback = document.getElementById('mathFeedback');
+  const raw = (input?.value || '').trim();
+  const guess = Number(raw);
+  if (!raw || Number.isNaN(guess)) {
+    if (feedback) feedback.textContent = 'Type a number.';
+    return;
+  }
+  if (guess === mathAnswerValue()) {
+    math.score += 1;
+    if (feedback) feedback.textContent = 'Correct!';
+    nextMathQuestion();
+  } else {
+    math.score = Math.max(0, math.score - 1);
+    if (feedback) feedback.textContent = 'Wrong (−1). Try the next one!';
+    nextMathQuestion();
+  }
+  if (input) input.value = '';
+  renderMathUI();
+}
+
+function shuffleString(s) {
+  const arr = s.split('');
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+  return arr.join('');
+}
+
+function newScramble() {
+  const w = scramble.words[Math.floor(Math.random() * scramble.words.length)];
+  scramble.current = w;
+  let s = shuffleString(w);
+  if (s === w) s = shuffleString(w);
+  scramble.scrambled = s;
+  const guess = document.getElementById('scrambleGuess');
+  if (guess) guess.value = '';
+  updateScrambleUI();
+}
+
+function updateScrambleUI() {
+  const w = document.getElementById('scrambleWord');
+  const solved = document.getElementById('scrambleSolved');
+  const streak = document.getElementById('scrambleStreak');
+  if (w) w.textContent = scramble.scrambled || '—';
+  if (solved) solved.textContent = String(scramble.solved);
+  if (streak) streak.textContent = String(scramble.streak);
+}
+
+function persistScrambleStats() {
+  localStorage.setItem(GAME_KEYS.scrambleStats, JSON.stringify({ solved: scramble.solved, streak: scramble.streak }));
+}
+
+function onScrambleKeydown(e) {
+  if (e.key === 'Enter') checkScramble();
+}
+
+function checkScramble() {
+  const guess = (document.getElementById('scrambleGuess')?.value || '').trim().toLowerCase();
+  const feedback = document.getElementById('scrambleFeedback');
+  if (!guess) {
+    if (feedback) feedback.textContent = 'Type your guess.';
+    return;
+  }
+  if (guess === scramble.current) {
+    scramble.solved += 1;
+    scramble.streak += 1;
+    persistScrambleStats();
+    updateScrambleUI();
+    if (feedback) feedback.textContent = 'Correct! New word coming up…';
+    setTimeout(() => {
+      newScramble();
+      const input = document.getElementById('scrambleGuess');
+      if (input) input.focus();
+    }, 450);
+  } else {
+    scramble.streak = 0;
+    persistScrambleStats();
+    updateScrambleUI();
+    if (feedback) feedback.textContent = 'Not quite. Try again!';
+  }
+}
+
+function toggleTaskById(id) {
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  tasks[idx].completed = !tasks[idx].completed;
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  renderTasks();
+  updateDashboard();
+}
+
+function deleteTaskById(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  renderTasks();
+  updateDashboard();
+}
+
+function dueSoonCount() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(start);
+  end.setDate(end.getDate() + 3);
+  return tasks.filter(t => !t.completed && t.dueDate).filter(t => {
+    const d = new Date(t.dueDate + "T00:00:00");
+    return d >= start && d <= end;
+  }).length;
+}
+
+function todayCount() {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  return tasks.filter(t => !t.completed && t.dueDate === today).length;
+}
+
+function renderUpcoming() {
+  const list = document.getElementById("upcomingList");
+  if (!list) return;
+  const pending = tasks.filter(t => !t.completed);
+  pending.sort((a, b) => {
+    const ad = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+    const bd = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+    if (ad !== bd) return ad - bd;
+    const pr = { high: 0, medium: 1, low: 2 };
+    return (pr[a.priority] ?? 1) - (pr[b.priority] ?? 1);
+  });
+  const top = pending.slice(0, 5);
+  list.innerHTML = "";
+  if (!top.length) {
+    list.innerHTML = `<div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">You're all caught up.</div>`;
+    return;
+  }
+  top.forEach(t => {
+    const subj = t.subjectId ? getSubjectById(t.subjectId) : null;
+    const subjBadge = subj ? colorClasses(subj.color) : "bg-white/5 text-white/70 border-white/10";
+    const dueText = formatDue(t.dueDate);
+    list.innerHTML += `
+      <div class="anim-card rounded-xl border border-white/10 bg-white/5 p-4">
+        <p class="text-sm font-semibold text-white">${t.title}</p>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${priorityBadge(t.priority || 'medium')}">${(t.priority || 'medium').toUpperCase()}</span>
+          <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${subjBadge}">${subj ? subj.name : 'No subject'}</span>
+          ${dueText ? `<span class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">📅 ${dueText}</span>` : ""}
+        </div>
+      </div>`;
+  });
+  animateList(list);
+}
+
+function updateDashboard() {
+  const total = tasks.length;
+  const completed = tasks.filter(t => t.completed).length;
+  const pending = total - completed;
+  const percent = total ? Math.round((completed / total) * 100) : 0;
+  const dueSoon = dueSoonCount();
+  const highPriority = tasks.filter(t => !t.completed && (t.priority || "medium") === "high").length;
+
+  document.getElementById("totalTasks").innerText = total;
+  document.getElementById("completedTasks").innerText = completed;
+  document.getElementById("pendingTasks").innerText = pending;
+  document.getElementById("dueSoonTasks").innerText = dueSoon;
+
+  document.getElementById("progressBar").style.width = percent + "%";
+  document.getElementById("progressLabel").innerText = percent + "%";
+
+  document.getElementById("todayTaskCount").innerText = todayCount() + " tasks";
+  document.getElementById("highPriorityCount").innerText = highPriority;
+  document.getElementById("subjectCount").innerText = subjects.length;
+
+  renderUpcoming();
+  renderDigitalWellbeing();
+}
+
+normalizeData();
+refreshSubjectDropdown();
+renderSubjects();
+renderTasks();
+updateDashboard();
+</script>
+
+</body>
+</html>
